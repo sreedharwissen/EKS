@@ -1,4 +1,11 @@
 Parameters:
+  Stage:
+    Type: String
+    Allowed Values:
+      - Dev
+      - Prod
+    Default: Stage
+    Description: "Adding stage Value"
   EksRole:
     Type: String
     Default: "arn:aws:iam::882956824445:role/aws-service-role/eks.amazonaws.com/AWSServiceRoleForAmazonEKS"
@@ -7,7 +14,7 @@ Resources:
   EKSCluster:
       Type: AWS::EKS::Cluster
       Properties:
-        Name: Prod
+        Name: !Ref Stage
         Version: "1.20"
         RoleArn: !Ref EksRole
         ResourcesVpcConfig:
