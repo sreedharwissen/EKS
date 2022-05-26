@@ -4,7 +4,6 @@ Parameters:
     AllowedValues:
       - Dev
       - Prod
-    Default: Stage
     Description: "Adding stage Value"
   EksRole:
     Type: String
