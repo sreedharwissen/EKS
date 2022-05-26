@@ -1,0 +1,29 @@
+Parameters:
+  EksRole:
+    Type: String
+    Default: "arn:aws:iam::882956824445:role/aws-service-role/eks.amazonaws.com/AWSServiceRoleForAmazonEKS"
+
+Resources:
+  EKSCluster:
+      Type: AWS::EKS::Cluster
+      Properties:
+        Name: Prod
+        Version: "1.20"
+        RoleArn: !Ref EksRole
+        ResourcesVpcConfig:
+          SecurityGroupIds:
+            - sg-0080d80ba1b53a4b3
+          SubnetIds:
+            - subnet-d8cd3ca5
+            - subnet-66d1882a
+          EndpointPublicAccess: false
+          EndpointPrivateAccess: true
+          PublicAccessCidrs: [ "0.0.0.0/0" ]
+        Logging:
+          ClusterLogging:
+            EnabledTypes:
+              - Type: api
+              - Type: audit
+        Tags:
+          - Key: "key"
+            Value: "val"

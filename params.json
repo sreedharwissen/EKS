@@ -1,0 +1,5 @@
+{
+    "Parameters":{
+        "EksRole": "arn:aws:iam::882956824445:role/aws-service-role/eks.amazonaws.com/AWSServiceRoleForAmazonEKS"
+    }
+}
