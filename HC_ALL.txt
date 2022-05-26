@@ -1,0 +1,273 @@
+
+
+import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.streaming.{Seconds, StreamingContext}
+import org.apache.spark.storage.StorageLevel
+import org.apache.log4j.{Level, Logger}
+Logger.getRootLogger.setLevel(Level.WARN)
+val ssc = new StreamingContext(sc, Seconds(10))
+val lines = ssc.socketTextStream("localhost", 9999, StorageLevel.MEMORY_AND_DISK_SER)
+val words = lines.flatMap(_.split(" "))
+val pairs = words.map((_, 1))
+val wordCounts = pairs.reduceByKey(_ + _)
+wordCounts.print()
+ssc.start() 
+
+
+
+
+
+
+sqoop import --connect jdbc:mysql://localhost/employees --username hive --password hive --table departments --hcatalog-database default --hcatalog-table my_table_orc --create-hcatalog-table --hcatalog-storage-stanza "stored as orcfile"
+
+
+
+spark-shell --repositories http://repo.hortonworks.com/content/repositories/releases --master yarn --packages org.apache.spark:spark-streaming-kafka-0-10_2.11:2.3.1.3.0.1.0-187 --jars lift-json_2.11-3.0.1-sources.jar,lift-json_2.11-3.0.1.jar
+
+
+https://community.hortonworks.com/content/kbentry/223626/integrating-apache-hive-with-apache-spark-hive-war.html
+
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib64:/usr/lib64/R/library/rJava/libs/
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$JAVA_LD_LIBRARY_PATH
+R CMD javareconf -e
+
+
+
+
+
+
+curl -u admin:Cr8@01ambariusdev -i -H 'X-Requested-By: ambari' -X POST -d '{"host_components" : [{"HostRoles":{"component_name":"ZEPPELIN_MASTER"}}] }' http://10.229.160.215:8080/api/v1/clusters/USHCHDPDEV01/hosts?Hosts/host_name=h5507-6.cloud.health.ge.com 
+
+
+===========================================hive-druid================================================================================================================
+CREATE TABLE druid_table_2 STORED BY 'org.apache.hadoop.hive.druid.DruidStorageHandler' as select userid,num_l,cast(from_unixtime(unix_timestamp(timecolumn, 'yyyy')) as timestamp) as `__time` from latest_table;
+
+SET hive.druid.broker.address.default=10.229.162.127:8082
+set hive.druid.metadata.username=druid;
+set hive.druid.metadata.password=Cr8@01druid;
+set hive.druid.metadata.uri=jdbc:mysql://dev01gdl.c67zpurmgqn7.us-east-1.rds.amazonaws.com:3306/druid;
+=======================================================================================================================================================================
+
+
+
+========================phoenix indexing===============================================================================================================================
+HADOOP_CLASSPATH=/usr/hdp/current/phoenix-client/phoenix-client.jar:`hbase classpath` hadoop jar /usr/hdp/current/phoenix-client/phoenix-client.jar org.apache.phoenix.mapreduce.index.IndexTool --data-table "ct_gesyslog_msg" --index-table "ASYNC_TEST12" --output-path "ASYNC_TEST12_HFILES"
+=======================================================================================================================================================================
+
+
+
+
+
+
+log search password Cr8@01logsearchusdev
+
+
+atlas.authentication.method.ldap.userDNpattern ==> uid=sAMAccountName
+atlas.authentication.method.ldap.groupSearchBase ==> OU=Managed,OU=Groups,ou=enterprise, dc=vds,dc=logon
+atlas.authentication.method.ldap.groupSearchFilter ==> (CN={0})
+atlas.authentication.method.ldap.groupRoleAttribute ==> cn
+atlas.authentication.method.ldap.base.dn ==> OU=Standard,OU=Users,ou=enterprise,dc=vds,dc=logon
+atlas.authentication.method.ldap.bind.dn ==> Gessouid=E16A69EA-EF5E-17D6-8EE1-002128B20D70,ou=geworker,o=ge.com
+atlas.authentication.method.ldap.referral ==> ignore
+atlas.authentication.method.ldap.user.searchfilter ==> (CN={0})
+atlas.authentication.method.ldap.default.role ==> ROLE_USER
+
+
+===========================================Druid-extension installation command=======================================================================================
+$JAVA_HOME/bin/java -classpath "lib/*" -Ddruid.extensions.directory="extensions" -Ddruid.extensions.hadoopDependenciesDir="hadoop-dependencies" io.druid.cli.Main tools pull-deps -c io.druid.extensions.contrib:druid-parquet-extensions --remoteRepository https://metamx.artifactoryonline.com/metamx/pub-libs-releases-local --defaultVersion 0.12.1 --no-default-hadoop
+
+=================================================================Ldap search command===================================================================================
+ ldapsearch  -H ldaps://ProdIZvds.8389.corporate.ge.com:636  -D Gessouid=E16A69EA-EF5E-17D6-8EE1-002128B20D70,ou=geworker,o=ge.com -W -b "OU=Users,ou=enterprise,dc=vds,dc=logon" "(cn=503041996)"
+=======================================================================================================================================================================
+
+
+
+
+
+<VirtualHost *:80>
+  RewriteEngine on
+  RedirectMatch ^/ranger$ /ranger/
+  RequestHeader set X-RSC-Request "%{REQUEST_SCHEME}s://%{HTTP_HOST}s%{REQUEST_URI}s"
+  RewriteCond %{HTTP:Upgrade} =websocket
+  RewriteRule /ranger/(.*) ws://10.225.1.197:6080/$1 [P,L]
+  RewriteCond %{HTTP:Upgrade} !=websocket
+  RewriteRule /ranger/(.*) http://10.225.1.197:6080/$1 [P,L]
+  ProxyPass /ranger/ http://10.225.1.197:6080/
+  ProxyPassReverse /ranger/ http://10.225.1.197:6080/
+  Header edit Location ^/ /ranger/
+</VirtualHost>
+
+
+
+
+
+============================================================================================
+zipgrep CryptoAllPermission
+
+
+https://community.hortonworks.com/content/supportkb/48974/how-to-check-if-jce-is-unlimited.html
+
+
+
+
+./bin/spark-submit --name FireServiceCallAnalysisDataFramePartitionTest --master yarn --deploy-mode cluster --executor-memory 2g --executor-cores 2 --num-executors 2 --conf spark.sql.shuffle.partitions=23 --conf spark.default.parallelism=23 --class com.treselle.fscalls.analysis.FireServiceCallAnalysisDF /data/SFFireServiceCall/SFFireServiceCallAnalysis.jar /user/tsldp/FireServiceCallDataSet/Fire_Department_Calls_for_Service.csv
+
+
+
+
+
+
+
+[solr@h13062-4 ~]$ /opt/lucidworks-hdpsearch/solr/server/scripts/cloud-scripts/zkcli.sh -cmd upconfig -zkhost  h13310-3.cloud.health.ge.com:2181/solr -confdir /data/solr-collection-activity-master/activity/conf -confname activity
+[solr@h13062-4 ~]$
+[solr@h13062-4 ~]$ /opt/lucidworks-hdpsearch/solr/server/scripts/cloud-scripts/zkcli.sh -cmd linkconfig -collection activity -confname activity -zkhost  h13310-3.cloud.health.ge.com:2181,h13310-4.cloud.health.ge.com:2181,h13310-5.cloud.health.ge.com:2181
+[solr@h13062-4 ~]$ /opt/lucidworks-hdpsearch/solr/bin/solr create_collection -c activity -shards 14 -replicationFactor 2 -p 8080 -d /data/solr-collection-activity-master/activity/conf
+INFO  - 2019-08-15 05:13:52.596; org.apache.solr.util.configuration.SSLCredentialProviderFactory; Processing SSL Credential Provider chain: env;sysprop
+Created collection 'activity' with 14 shard(s), 2 replica(s) with config-set 'activity'
+[solr@h13062-4 ~]$
+
+
+
+
+
+
+
+
+
+
+
+
+
+ /usr/hdp/current/kafka-broker/bin/kafka-console-producer.sh --broker-list ip-10-242-112-117.ec2.internal:6667 --topic kafkatest --producer-property security.protocol=SASL_PLAINTEXT
+
+
+/usr/hdp/current/kafka-broker/bin/kafka-console-consumer.sh --bootstrap-server ip-10-242-112-117.ec2.internal:6667 --topic kafka --consumer-property security.protocol=SASL_PLAINTEXT --from-beginning
+
+
+
+
+
+
+
+
+s3fs -o allow_other,uid=0,gid=0,umask=000,use_cache=/tmp/cache odp-eu-prod-raw /mnt/odp-eu-prod-raw 
+
+
+
+
+
+
+
+
+
+
+
+LDAPTLS_REQCERT=never ldapsearch -x -H ldaps://10.38.9.237:636 -D "Gessouid=E16A69EA-EF5E-17D6-8EE1-002128B20D70,ou=geworker,o=ge.com" -w "Taj16mahal" -b "OU=Managed,OU=Groups,ou=enterprise,dc=vds,dc=logon" "cn=APP_GE006000000_DataLake_Hadoop_Admins"
+
+
+
+
+
+
+
+java -Djava.security.krb5.conf=C:\ProgramData\MIT\Kerberos5\krb5.ini -Djava.security.krb5.realm=ODP.GEHC.INT -Djava.security.krb5.kdc=10.242.107.113 -Djavax.security.auth.useSubjectCredsOnly=false -jar C:\Users\503095105\AppData\Local\Temp\Temp1_Workbench-Build124.zip\sqlworkbench.jar
+
+
+
+
+jdbc:hive2://10.242.107.105:10000/default;principal=hive/ip-10-242-107-113.ec2.internal@ODP.GEHC.INT;kerberosAuthType=fromSubject
+
+
+
+
+
+sc.textFile("hdfs:///tmp/texter.file").flatMap(line => line.split(" ")).map(word => (word, 1)).reduceByKey(_ + _).saveAsTextFile("hdfs:///tmp/damer.txt")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+https://dev59478.service-now.com/nav_to.do?uri=%2Fhome.do
+https://aws.amazon.com/blogs/mt/how-to-automatically-create-an-incident-in-servicenow-from-an-amazon-cloudwatch-alarm/
+https://github.com/sreedharreddy9949627361/x_snc_aws_sns-
+
+
+
+
+
+
+
+
+
+
+
+
+
+zSJ3s*sF
+
+Enterprise	10.93.20.86:5432:angdwp01:gpadmin:Y)of{5Iu
+Discovery       10.93.72.35:5432:angdwp02:gpadmin:greenPLUM
+
+Discovery ===> Gr33nplum!
+
+
+select * from rs_utils.procs_tables_dependency_data  where procname like '%fn_load_phm_flight_map_cf6%'
+
+
+select pg_data_prof('geagp_sc_analytics', 'glad_problem_lot_trend', true, true);
+select * from gp2rs_table_ddl_gen where sch='geagp_sc_analytics' and tbl = 'glad_problem_lot_trend';
+
+select * from queries_history where query_text ilike '%geagp_opsparameters.op_param_monthly_esn_rd%' order by ctime desc;
+
+
+
+CALL Multi_View_Dependencies_fndr(ARRAY('csf_mad_fms_db_eng.voucher_view','csf_mad_fms_db_eng.farmout_time_view','csf_rut_fms_db_eng.voucher_view','csf_rut_fms_db_eng.farmout_time_view','csf_wil_fms_db_eng.active_wip_view_wop2','csf_wil_fms_db_eng.voucher_view'),'cat');
+
+
+select * from gpexit_table_validations where gp_schema = 'geagp_cp' and object_name = 'mtl_item_catalog_groups_b_vw'
+
+
+To know last ingestion time for the table:
+
+select max((timestamp 'epoch' + _hoodie_load_timestamp/1000 * interval '0 seconds 1 milliseconds')) from geadw_fdm_eng.fdm_project_info;
+
+
+============================================================================================================
+                                 Data Profiling
+=============================================================================================================
+
+insert into rs_utils.rsmig_sprint_schemas(schema_name, rs_schema_name, new_schema, sprint, batch, is_ingest, ingestion_type,
+table_cnt, view_cnt, proc_cnt, has_views_procs, profile_start_dt)
+values
+('geagp_camp', 'camp', 'camp', 25, 11, false, null,1, 0, 3, true, current_timestamp),
+
+
+
+java -cp SchemaMigTools.jar;postgresql-42.2.18.jar;redshift-jdbc42-2.0.0.4.jar;rsmigtool.properties org.db.connectors.GPDataProfiler geagp_av_sc_avio_sap_asset_t
+python rs_jenkins_deployer.py camp SQL
+===================================================================================================================
+java -cp SchemaMigTools.jar;sct_error_assess_complexities.csv org.gp2rs.tools.RSSchemaAssessment C:\Users\503193010\Documents\SCT_Code_Reports\SCT_Reports_WP01_Sprint10
+
+
+
+java -cp SchemaMigTools.jar;sct_error_assess_complexities.csv org.gp2rs.tools.SCTAppendReports C:\Users\503193010\Documents\SCT_Code_Reports\SCT_Reports_WP01_Sprint10
+
+
+
+java -cp SchemaMigTools.jar;sct_estimates_config.properties org.gp2rs.tools.GP2RSCodeSplitter C:\Users\503193010\Documents\SCT_Code_Reports\SCT_Reports_WP01_Sprint10 RS
+
+
+
