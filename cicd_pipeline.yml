@@ -1,0 +1,185 @@
+Parameters:
+  TemplateConfiguration:
+    Type: String
+    Default: params.json
+  Template:
+    Type: String
+    Default: Template.yml
+  S3BucketName:
+    Type: String
+    Default: emrbucketcicdpipeline
+  KmsKey: 
+    Type: String
+    Default: arn:aws:kms:us-east-2:882956824445:key/15079889-d551-47c8-a7f1-d22d907d0764
+  CodePipelineServiceRole:
+    Type: String
+    Default: arn:aws:iam::882956824445:role/wissen-codepipeline
+  GitHubUserName:
+    Type: String
+    Default: sreedharwissen
+  GitHubRepo:
+    Type: String
+    Default: EKS
+  GitHubBranch: 
+    Type: String
+    Default: main
+  GitHubRepoAccessToken:
+    Type: String
+    Default: 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
+  EmailId:
+    Type: String
+    Default: yeldandisreedharreddy@gmail.com
+
+Resources:
+  PipelineTopic:
+    Type: 'AWS::SNS::Topic'
+    Properties:
+      DisplayName: !Join 
+        - ' '
+        - - !Sub '${AWS::StackName}'
+          - Pipeline Notification
+      Tags:
+        - Key: Name
+          Value: !Join 
+            - ' '
+            - - !Sub '${AWS::StackName}'
+              - Pipeline Notification
+      Subscription:
+        - Endpoint: !Ref EmailId
+          Protocol: email
+      TopicName: !Join 
+        - '-'
+        - - !Sub '${AWS::StackName}'
+          - cicd-pipeline
+  PipelineTopicPolicy:
+    Type: 'AWS::SNS::TopicPolicy'
+    Properties:
+      PolicyDocument:
+        Id: CloudWatchEvent
+        Version: 2012-10-17
+        Statement:
+          - Sid: Allows CloudWatch Events to interact with SNS topic
+            Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: 'sns:Publish'
+            Resource: !Ref PipelineTopic
+      Topics:
+        - !Ref PipelineTopic
+
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties: 
+      ArtifactStore: 
+        EncryptionKey: 
+          Id: !Ref KmsKey
+          Type: KMS
+        Location: !Ref S3BucketName
+        Type: S3
+      Name: !Sub ${AWS::StackName}-Pipeline
+      RestartExecutionOnUpdate: false
+      RoleArn: !Ref CodePipelineServiceRole
+      Tags: 
+        - Key: Name
+          Value: !Sub ${AWS::StackName}    
+      Stages: 
+        - Name: Source 
+          Actions: 
+            - Name: Source-Stage
+              ActionTypeId: 
+                Category: Source
+                Owner: ThirdParty
+                Provider: GitHub
+                Version: 1
+              Configuration:
+                Owner: !Ref GitHubUserName
+                Repo: !Ref GitHubRepo
+                Branch: !Ref GitHubBranch
+                OAuthToken: !Ref GitHubRepoAccessToken
+                PollForSourceChanges: false
+              InputArtifacts: []
+                # - Name: cicd-Source-Artifact
+              
+              Namespace: !Sub ${AWS::StackName}
+              OutputArtifacts: 
+                - Name: cicd-Source-OutPut-Artifact
+              RunOrder: 1
+
+
+             
+        - Name: Build 
+          Actions: 
+            - Name: Stage-Sign-Off
+              ActionTypeId: 
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: 1
+              Configuration:
+                NotificationArn: !Ref PipelineTopic
+                CustomData: Please Approve manual action
+              RunOrder: 1          
+            - Name: Build-Stage
+              ActionTypeId: 
+                Category: Build
+                Owner: AWS
+                Provider: CodeBuild
+                Version: 1
+              Configuration:
+                ProjectName: codebuild-codepipeline
+                # PrimarySource: SourceArtifact
+                BatchEnabled: false
+                CombineArtifacts: false
+              InputArtifacts:
+                - Name: cicd-Source-OutPut-Artifact
+              OutputArtifacts: 
+                - Name: BuildArtifact              
+              RunOrder: 2
+        - Name: Stage-Deploy 
+          Actions:
+            - Name: CreateChangeSet
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              RunOrder: 1
+              Configuration:
+                ActionMode: CHANGE_SET_REPLACE
+                Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+                ChangeSetName: pipeline-changeset
+                ParameterOverrides: '{"Stage": "Prod"}'
+                RoleArn: arn:aws:iam::882956824445:role/av-datasci-cloudformation-deployer #CloudFormation_Role_ARN
+                StackName: !Join [ "", [ !Ref 'AWS::StackName', 'Dev' ] ]
+                TemplateConfiguration: !Join ['',['BuildArtifact::', !Ref TemplateConfiguration]]
+                TemplatePath: !Join ['',['BuildArtifact::', !Ref Template]]
+              OutputArtifacts: []
+              InputArtifacts:
+                - Name: BuildArtifact
+            - Name: Stage-Sign-Off
+              ActionTypeId: 
+                Category: Approval
+                Owner: AWS
+                Provider: Manual
+                Version: 1
+              Configuration:
+                NotificationArn: !Ref PipelineTopic
+                CustomData: Please Approve manual action
+              RunOrder: 2
+            - Name: ExcuteChangeSet
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: CloudFormation
+                Version: '1'
+              RunOrder: 3
+              Configuration:
+                ActionMode: CHANGE_SET_EXECUTE
+                Capabilities: CAPABILITY_NAMED_IAM,CAPABILITY_AUTO_EXPAND
+                ChangeSetName: pipeline-changeset
+                # ParameterOverrides: '{"ProjectId": "my-project","CodeDeployRole": "CodeDeploy_Role_ARN"}'
+                RoleArn: arn:aws:iam::882956824445:role/av-datasci-cloudformation-deployer #CloudFormation_Role_ARN
+                StackName: !Join [ "", [ !Ref 'AWS::StackName', 'Dev' ] ]
+              OutputArtifacts: []
+              InputArtifacts:
+                - Name: BuildArtifact
